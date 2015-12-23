@@ -78,16 +78,28 @@
         }
     };
 
-    var pluck = T('PluckGen', {env: T('perc', {a:0, r:1500}), poly: 6}).play();
+    var synth = T('SynthDef').play();
+
+    synth.def = function(opts) {
+        var synth;
+
+        synth = T('pluck', {freq: opts.freq, mul: opts.velocity / 128}).bang();
+        synth = T('perc', {a: 0, r: 1500}, synth);
+
+        synth.on('ended', opts.doneAction).bang();
+        synth = T('lpf', {freq: 3000, Q: 1}, synth);
+
+        return synth;
+    };
 
     function play(chord) {
-        pluck.allNoteOff();
+        synth.allNoteOff();
         var sched = T('schedule');
         var delay = 0;
         for (var s = 0; s < chord.notes.length; s++) {
             if (chord.notes[s] !== null) {
-                sched.sched(delay, pluck.noteOn.bind(pluck, chord.notes[s], 40));
-                delay += 50;
+                sched.sched(delay, synth.noteOn.bind(synth, chord.notes[s], 40));
+                delay += 80;
             }
         }
         sched.start();
