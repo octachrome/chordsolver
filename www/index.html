@@ -65,15 +65,17 @@
                 g.line(0, f*FRET, (strings-1)*STRING, f*FRET).attr({stroke: 'black'});
             }
             function finger(string, fret, baseFret) {
-                g.circle(string * 20, (fret - (baseFret ? baseFret - 0.5 : 0.5)) * FRET, fret ? 7 : 5).attr({
-                    stroke: 'black',
-                    fill: fret ? 'black' : 'white'
-                });
+                if (fret !== null) {
+                    g.circle(string * 20, (fret - (baseFret ? baseFret - 0.5 : 0.5)) * FRET, fret ? 7 : 5).attr({
+                        stroke: 'black',
+                        fill: fret ? 'black' : 'white'
+                    });
+                } else {
+                    g.text((string - 0.3) * 20, FRET * -0.3, 'X').attr({class: 'fret'});
+                }
             }
             for (s = 0; s < strings; s++) {
-                if (chord.strings[s] !== null) {
-                    finger(s, chord.strings[s], chord.baseFret);
-                }
+                finger(s, chord.strings[s], chord.baseFret);
             }
         }
     };
