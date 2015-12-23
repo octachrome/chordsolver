@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+    html, body, svg {
+        height: 100%;
+    }
+    ul {
+        margin: 0;
+        padding: 0;
+    }
+    li {
+        display: inline-block;
+        list-style-image: none;
+    }
+    text.fret {
+        font: 12pt sans-serif;
+    }
+    </style>
+    <script src="jquery/dist/jquery.js"></script>
+    <script src="knockout/build/output/knockout-latest.debug.js"></script>
+    <script src="snapsvg/dist/snap.svg.js"></script>
+    <script src="timbre/timbre.dev.js"></script>
+    <script>
+    var vm = {
+        chords: ko.observableArray()
+    };
+
+    ko.bindingHandlers.chord = {
+        init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        },
+        update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+            element.innerHTML = '';
+            var chord = ko.unwrap(valueAccessor());
+
+            var strings = chord.strings.length;
+            var frets = 5;
+            var STRING = 20;
+            var FRET = 25;
+
+            var snap = Snap(element).attr({
+                width: (strings + 1) * STRING,
+                height: (frets + 1) * FRET
+            });
+
+            var g = snap.g();
+            if (chord.baseFret) {
+                snap.text(chord.baseFret >= 10 ? 0 : 8, FRET * 1.5, chord.baseFret).attr({class: 'fret'});
+            }
+            g.transform('t27,20');
+            g.line(0, 0, (strings-1)*STRING, 0).attr({stroke: 'black', strokeWidth: chord.baseFret ? 1 : 4});
+            for (var s = 0; s < strings; s++) {
+                g.line(s*STRING, 0, s*STRING, frets*FRET).attr({stroke: 'black'});
+            }
+            for (var f = 1; f <= frets; f++) {
+                g.line(0, f*FRET, (strings-1)*STRING, f*FRET).attr({stroke: 'black'});
+            }
+            function finger(string, fret, baseFret) {
+                g.circle(string * 20, (fret - (baseFret ? baseFret - 0.5 : 0.5)) * FRET, fret ? 7 : 5).attr({
+                    stroke: 'black',
+                    fill: fret ? 'black' : 'white'
+                });
+            }
+            for (s = 0; s < strings; s++) {
+                if (chord.strings[s] !== null) {
+                    finger(s, chord.strings[s], chord.baseFret);
+                }
+            }
+        }
+    };
+
+    var pluck = T('PluckGen', {env: T('perc', {a:0, r:1500}), poly: 6}).play();
+
+    function play(chord) {
+        pluck.allNoteOff();
+        var sched = T('schedule');
+        var delay = 0;
+        for (var s = 0; s < chord.notes.length; s++) {
+            if (chord.notes[s] !== null) {
+                sched.sched(delay, pluck.noteOn.bind(pluck, chord.notes[s], 40));
+                delay += 50;
+            }
+        }
+        sched.start();
+    }
+
+    $.get('/chords', function (chords) {
+        vm.chords(chords);
+    });
+
+    $(function () {
+        ko.applyBindings(vm);
+    });
+    </script>
+</head>
+<body>
+    <ul>
+        <!-- ko foreach: chords -->
+        <li>
+            <svg data-bind="chord: $data, event: {mouseenter: play}"></svg>
+        </li>
+        <!-- /ko -->
+</body>
+</html>

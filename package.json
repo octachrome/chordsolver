@@ -1,0 +1,20 @@
+{
+  "name": "chords",
+  "version": "0.0.0",
+  "description": "",
+  "main": "chords.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "express": "^4.13.3"
+  },
+  "dependencies": {
+    "jquery": "^2.1.4",
+    "knockout": "^3.4.0",
+    "snapsvg": "^0.4.0",
+    "timbre": "^14.11.25"
+  }
+}
