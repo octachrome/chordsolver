@@ -215,7 +215,7 @@ function getPracticalChords(chords, options) {
                 }
             }
             // Drop upper strings from the chord to see if it becomes practical.
-            alt = chords[j];
+            alt = chords[i];
             for (j = alt.length - 1; j >= Math.max(0, alt.length - STRINGS_TO_DROP); j--) {
                 alt = alt.slice();
                 alt[j] = null;

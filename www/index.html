@@ -4,6 +4,14 @@
     <style>
     html, body, svg {
         height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    svg {
+        cursor: pointer;
+    }
+    div.search {
+        padding: 27px;
     }
     ul {
         margin: 0;
@@ -23,6 +31,7 @@
     <script src="timbre/timbre.dev.js"></script>
     <script>
     var vm = {
+        notes: ko.observable(),
         chords: ko.observableArray()
     };
 
@@ -40,14 +49,14 @@
 
             var snap = Snap(element).attr({
                 width: (strings + 1) * STRING,
-                height: (frets + 1) * FRET
+                height: (frets + 1) * FRET + 5
             });
 
             var g = snap.g();
             if (chord.baseFret) {
-                snap.text(chord.baseFret >= 10 ? 0 : 8, FRET * 1.5, chord.baseFret).attr({class: 'fret'});
+                g.text((chord.baseFret >= 10 ? -9 : 0) - 20, FRET * 0.7, chord.baseFret).attr({class: 'fret'});
             }
-            g.transform('t27,20');
+            g.transform('t27,25');
             g.line(0, 0, (strings-1)*STRING, 0).attr({stroke: 'black', strokeWidth: chord.baseFret ? 1 : 4});
             for (var s = 0; s < strings; s++) {
                 g.line(s*STRING, 0, s*STRING, frets*FRET).attr({stroke: 'black'});
@@ -84,20 +93,28 @@
         sched.start();
     }
 
-    $.get('/chords', function (chords) {
-        vm.chords(chords);
-    });
-
     $(function () {
         ko.applyBindings(vm);
+
+        vm.notes.subscribe(function (notes) {
+            $.get('/chords', {notes: notes}, function (chords) {
+                vm.chords(chords);
+            });
+        });
+
+        vm.notes('G B D');
+        $('input').focus();
     });
     </script>
 </head>
 <body>
+    <div class="search">
+        <input type="text" data-bind="textinput: notes">
+    </div>
     <ul>
         <!-- ko foreach: chords -->
         <li>
-            <svg data-bind="chord: $data, event: {mouseenter: play}"></svg>
+            <svg data-bind="chord: $data, click: play"></svg>
         </li>
         <!-- /ko -->
 </body>

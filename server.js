@@ -7,8 +7,10 @@ app.use(express.static(__dirname + '/node_modules'));
 var getChords = require('./chords');
 
 app.get('/chords', function (req, res) {
+    var requiredNotes = (req.query.notes || '').trim().split(/\s+/);
+
     var chords = getChords({
-        requiredNotes: ['G', 'B', 'D']
+        requiredNotes: requiredNotes
     });
 
     res.json(chords);
