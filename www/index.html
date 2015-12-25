@@ -83,15 +83,14 @@
     var synth = T('SynthDef').play();
 
     synth.def = function(opts) {
-        var synth;
+        var pluck = T('pluck', {freq: opts.freq, mul: 0.2 * opts.velocity / 128}).bang();
+        var pluckEnv = T('perc', {a: 0, r: 200}, pluck).bang();
+        var tri = T('tri', {freq: opts.freq * 2, mul: opts.velocity / 128});
+        var triEnv = T('perc', {a: 0, r: 1000}, tri);
 
-        synth = T('pluck', {freq: opts.freq, mul: opts.velocity / 128}).bang();
-        synth = T('perc', {a: 0, r: 1500}, synth);
+        triEnv.on('ended', opts.doneAction).bang();
 
-        synth.on('ended', opts.doneAction).bang();
-        synth = T('lpf', {freq: 3000, Q: 1}, synth);
-
-        return synth;
+        return T('+', triEnv, pluckEnv);
     };
 
     function play(chord) {
