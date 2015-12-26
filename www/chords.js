@@ -75,8 +75,8 @@ if (typeof module === 'object' && module.exports) {
 function chordSearch(query) {
     var query = (query || '').trim();
     var opts;
-    if (query[0] === "'") {
-        query = query.substr(1).trim();
+    if (query[0].match(/^['"]/)) {
+        query = query.replace(/['"]/g, '').trim();
         opts = {
             requiredNotes: query.split(/\s+/)
         };

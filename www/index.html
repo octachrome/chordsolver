@@ -11,7 +11,7 @@
         cursor: pointer;
     }
     div.search {
-        padding: 27px;
+        padding-left: 27px;
     }
     ul {
         margin: 0;
@@ -21,8 +21,11 @@
         display: inline-block;
         list-style-image: none;
     }
-    text.fret {
+    body, text {
         font: 12pt sans-serif;
+    }
+    code {
+        background: #eee;
     }
     </style>
     <script src="jquery/dist/jquery.js"></script>
@@ -151,8 +154,11 @@
 </head>
 <body>
     <div class="search">
+        <p>Enter a chord name, such as <code>G7</code>, <code>Cmaj7</code>, <code>A13</code>, or a quoted list of notes, e.g., <code>'G B D</code>.</p>
         <input type="text" data-bind="textinput: query">
+        <p>Click a diagram to hear the chord.</p>
     </div>
+    <br/>
     <ul>
         <!-- ko foreach: chords -->
         <li>
