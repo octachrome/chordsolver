@@ -106,11 +106,44 @@
         sched.start();
     }
 
+    var worker;
+    var nextId = 1;
+    var callbacks = {};
+
+    if (window.Worker) {
+        worker = new Worker('chords.js');
+        worker.onmessage = function (e) {
+            var id = e.data.id;
+            var callback = callbacks[id];
+            delete callbacks[id];
+            callback(e.data.chords);
+        }
+    }
+
+    function getChords(notes, callback) {
+        if (worker) {
+            var id = nextId++;
+            callbacks[id] = callback;
+
+            var requiredNotes = (notes || '').trim().split(/\s+/);
+
+            worker.postMessage({
+                id: id,
+                opts: {
+                    requiredNotes: requiredNotes
+                }
+            });
+        } else {
+            $.get('/chords', {notes: notes}, function (chords) {
+                callback(chords);
+            });
+        }
+    }
     $(function () {
         ko.applyBindings(vm);
 
         vm.notes.subscribe(function (notes) {
-            $.get('/chords', {notes: notes}, function (chords) {
+            getChords(notes, function (chords) {
                 vm.chords(chords);
             });
         });

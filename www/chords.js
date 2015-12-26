@@ -8,12 +8,25 @@ var MIN_NOTES = 3;
 var NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 var STRINGS_TO_DROP = 2;
 
-module.exports = getChords;
+if (typeof module === 'object' && module.exports) {
+    // Node.
+    module.exports = getChords;
 
-if (require.main === module) {
-    console.log(getChords({
-        requiredNotes: process.argv.slice(2)
-    }));
+    // Testing.
+    if (require.main === module) {
+        console.log(getChords({
+            requiredNotes: process.argv.slice(2)
+        }));
+    }
+} else if (!this.document) {
+    // Web worker.
+    onmessage = function (e) {
+        var chords = getChords(e.data.opts);
+        postMessage({
+            id: e.data.id,
+            chords: chords
+        });
+    }
 }
 
 /**
