@@ -4,15 +4,10 @@ var app = express();
 app.use(express.static(__dirname + '/www'));
 app.use(express.static(__dirname + '/node_modules'));
 
-var getChords = require('./www/chords');
+var chordSearch = require('./www/chords').chordSearch;
 
 app.get('/chords', function (req, res) {
-    var requiredNotes = (req.query.notes || '').trim().split(/\s+/);
-
-    var chords = getChords({
-        requiredNotes: requiredNotes
-    });
-
+    var chords = chordSearch(req.query.query);
     res.json(chords);
 });
 

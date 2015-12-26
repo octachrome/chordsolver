@@ -10,23 +10,29 @@ var STRINGS_TO_DROP = 2;
 
 if (typeof module === 'object' && module.exports) {
     // Node.
-    module.exports = getChords;
+    module.exports.getChords = getChords;
+    module.exports.chordSearch = chordSearch;
 
     // Testing.
     if (require.main === module) {
-        console.log(getChords({
-            requiredNotes: process.argv.slice(2)
-        }));
+        console.log(chordSearch(process.argv.slice(2).join(' ')));
     }
 } else if (!this.document) {
     // Web worker.
     onmessage = function (e) {
-        var chords = getChords(e.data.opts);
+        var chords = chordSearch(e.data.query);
         postMessage({
             id: e.data.id,
             chords: chords
         });
     }
+}
+
+function chordSearch(query) {
+    var requiredNotes = (query || '').trim().split(/\s+/);
+    return getChords({
+        requiredNotes: requiredNotes
+    });
 }
 
 /**

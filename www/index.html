@@ -31,7 +31,7 @@
     <script src="timbre/timbre.dev.js"></script>
     <script>
     var vm = {
-        notes: ko.observable(),
+        query: ko.observable(),
         chords: ko.observableArray()
     };
 
@@ -120,21 +120,17 @@
         }
     }
 
-    function getChords(notes, callback) {
+    function getChords(query, callback) {
         if (worker) {
             var id = nextId++;
             callbacks[id] = callback;
 
-            var requiredNotes = (notes || '').trim().split(/\s+/);
-
             worker.postMessage({
                 id: id,
-                opts: {
-                    requiredNotes: requiredNotes
-                }
+                query: query
             });
         } else {
-            $.get('/chords', {notes: notes}, function (chords) {
+            $.get('/chords', {query: query}, function (chords) {
                 callback(chords);
             });
         }
@@ -142,20 +138,20 @@
     $(function () {
         ko.applyBindings(vm);
 
-        vm.notes.subscribe(function (notes) {
-            getChords(notes, function (chords) {
+        vm.query.subscribe(function (query) {
+            getChords(query, function (chords) {
                 vm.chords(chords);
             });
         });
 
-        vm.notes('G B D');
+        vm.query('G B D');
         $('input').focus();
     });
     </script>
 </head>
 <body>
     <div class="search">
-        <input type="text" data-bind="textinput: notes">
+        <input type="text" data-bind="textinput: query">
     </div>
     <ul>
         <!-- ko foreach: chords -->
