@@ -10,4 +10,4 @@ To run:
     npm install
     node server.js
 
-Open `http://localhost:3000` in your browser, and enter the notes that you want in your chord.
+Open `http://localhost:3000` in your browser, and enter the chord name or notes.
