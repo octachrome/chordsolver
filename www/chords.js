@@ -8,6 +8,37 @@ var MIN_NOTES = 3;
 var NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 var STRINGS_TO_DROP = 2;
 
+// Intervals
+var MI_2ND = 1;
+var MA_2ND = 2;
+var MI_3RD = 3;
+var MA_3RD = 4;
+var P_4TH = 5;
+var TRI = 6;
+var P_5TH = 7;
+var MI_6TH = 8;
+var MA_6TH = 9;
+var MI_7TH = 10;
+var MA_7TH = 11;
+
+var CHORD_PATTERN = new RegExp(
+    '^\\s*' +
+    '([A-Ga-g][b#]?)' +
+    '\\s*' +
+    '(ma|maj|major|m|-|mi|min|minor|aug|augmented|\\+|dim|diminished|[oO0])?' +
+    '\\s*' +
+    '(seven|seventh|7|7th|nine|ninth|9|9th|eleven|eleventh|11|11th|thirteen|thirteenth|13|13th|sixth|six|6|6th)?' +
+    '\\s*' +
+    '(sus|sus\\s?2|sus\\s?4)?' +
+    '\\s*' +
+    '(#5|b5|#9|b9|#11|b11)?' +
+    '\\s*$');
+var CP_ROOT = 1;
+var CP_TRIAD = 2;
+var CP_EXT = 3;
+var CP_SUS = 4;
+var CP_ALT = 5;
+
 if (typeof module === 'object' && module.exports) {
     // Node.
     module.exports.getChords = getChords;
@@ -15,7 +46,8 @@ if (typeof module === 'object' && module.exports) {
 
     // Testing.
     if (require.main === module) {
-        console.log(chordSearch(process.argv.slice(2).join(' ')));
+        var arg = process.argv.slice(2).join(' ');
+        console.log(chordSearch(arg));
     }
 } else if (!this.document) {
     // Web worker.
@@ -28,11 +60,126 @@ if (typeof module === 'object' && module.exports) {
     }
 }
 
+/**
+ * query:
+ * G (G major chord)
+ * G 7 (G7 chord)
+ *
+ * 'G (note G)
+ * 'G 7 (notes G and A)
+ *
+ * todo:
+ * G / A (A must be the root note)
+ * G \ A (A must be the top note)
+ */
 function chordSearch(query) {
-    var requiredNotes = (query || '').trim().split(/\s+/);
-    return getChords({
-        requiredNotes: requiredNotes
-    });
+    var query = (query || '').trim();
+    var opts;
+    if (query[0] === "'") {
+        query = query.substr(1).trim();
+        opts = {
+            requiredNotes: query.split(/\s+/)
+        };
+    } else {
+        opts = parseChord(query);
+    }
+    return getChords(opts);
+}
+
+function parseChord(query) {
+    var match = CHORD_PATTERN.exec(query);
+    if (!match) {
+        return null;
+    }
+    var root = match[CP_ROOT];
+    var triad = match[CP_TRIAD];
+    var ext = match[CP_EXT];
+    var required = {};
+    var optional = {};
+
+    root = root[0].toUpperCase() + root.substr(1);
+
+    if (!triad || triad.match(/^ma/)) {
+        triad = 'ma';
+        required[MA_3RD] = true;
+        optional[P_5TH] = true;
+    } else if (triad.match(/^-$|^m$|^mi/)) {
+        triad = 'mi';
+        required[MI_3RD] = true;
+        optional[P_5TH] = true;
+    } else if (triad.match(/^aug|^\\+/)) {
+        triad = 'aug';
+        required[MA_3RD] = true;
+        required[MI_6TH] = true;
+    } else if (triad.match(/^dim|^[oO0]/)) {
+        triad = 'dim';
+        required[MI_3RD] = true;
+        required[TRI] = true;
+    }
+
+    function seventh() {
+        if (match[CP_TRIAD] && match[CP_TRIAD].match(/^ma/)) {
+            required[MA_7TH] = true;
+        } else {
+            required[MI_7TH] = true;
+        }
+    }
+
+    function ninth() {
+        seventh();
+        required[MA_2ND] = true;
+    }
+
+    function eleventh() {
+        ninth();
+        required[P_4TH] = true;
+
+        if (required[MA_3RD]) {
+            optional[MA_3RD] = true;
+            delete required[MA_3RD];
+        }
+
+        if (required[MI_3RD]) {
+            optional[MI_3RD] = true;
+            delete required[MI_3RD];
+        }
+    }
+
+    function thirteenth() {
+        ninth();
+        required[MA_6TH] = true;
+    }
+
+    if (!ext) {
+        // No extension
+    } else if (ext.match(/^se|^7/)) {
+        seventh();
+    } else if (ext.match(/^si|^6/)) {
+        required[MA_6TH] = true;
+        // Minor 6th is not typically used.
+    } else if (ext.match(/^ni|^9/)) {
+        ninth();
+    } else if (ext.match(/^el|^11/)) {
+        eleventh();
+    } else if (ext.match(/^th|^13/)) {
+        thirteenth();
+    }
+
+    var requiredNotes = [root];
+    var add;
+    for (add in required) {
+        requiredNotes.push(noteAdd(root, parseInt(add)));
+    }
+
+    var optionalNotes = [];
+    for (add in optional) {
+        optionalNotes.push(noteAdd(root, parseInt(add)));
+    }
+
+    return {
+        requiredNotes: requiredNotes,
+        optionalNotes: optionalNotes
+    };
 }
 
 /**
@@ -309,11 +456,15 @@ function normNote(note) {
     return NOTES[index % NOTES.length];
 }
 
+function noteAdd(noteName, add) {
+    var baseIndex = NOTES.indexOf(noteName);
+    return NOTES[(baseIndex + add) % NOTES.length];
+}
+
 function getNoteName(string, fret, options) {
     var baseNoteName = options.tuning[string];
     var basePlainName = baseNoteName.match(/[A-Gb#]+/)[0];
-    var baseIndex = NOTES.indexOf(basePlainName);
-    return NOTES[(baseIndex + fret) % NOTES.length];
+    return noteAdd(basePlainName, fret);
 }
 
 function getNoteNames(chord, options) {
