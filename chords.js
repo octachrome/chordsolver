@@ -82,6 +82,11 @@ function chordSearch(query) {
         };
     } else {
         opts = parseChord(query);
+        if (opts === null) {
+            opts = {
+                requiredNotes: query.split(/\s+/)
+            };
+        }
     }
     return getChords(opts);
 }
@@ -94,6 +99,7 @@ function parseChord(query) {
     var root = match[CP_ROOT];
     var triad = match[CP_TRIAD];
     var ext = match[CP_EXT];
+    var sus = match[CP_SUS];
     var required = {};
     var optional = {};
 
@@ -107,7 +113,7 @@ function parseChord(query) {
         triad = 'mi';
         required[MI_3RD] = true;
         optional[P_5TH] = true;
-    } else if (triad.match(/^aug|^\\+/)) {
+    } else if (triad.match(/^aug|^\+/)) {
         triad = 'aug';
         required[MA_3RD] = true;
         required[MI_6TH] = true;
@@ -119,7 +125,11 @@ function parseChord(query) {
 
     function seventh() {
         if (match[CP_TRIAD] && match[CP_TRIAD].match(/^ma/)) {
+            // Major seventh
             required[MA_7TH] = true;
+        } else if (triad === 'dim' && match[CP_TRIAD] !== '0') {
+            // Diminished seventh
+            required[MA_6TH] = true;
         } else {
             required[MI_7TH] = true;
         }
@@ -163,6 +173,16 @@ function parseChord(query) {
         eleventh();
     } else if (ext.match(/^th|^13/)) {
         thirteenth();
+    }
+
+    if (sus) {
+        delete required[MA_3RD];
+        delete required[MI_3RD];
+        if (sus === 'sus2') {
+            required[MA_2ND] = true;
+        } else {
+            required[P_4TH] = true;
+        }
     }
 
     var requiredNotes = [root];
