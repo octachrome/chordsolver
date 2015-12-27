@@ -9,17 +9,18 @@ var NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 var STRINGS_TO_DROP = 2;
 
 // Intervals
-var MI_2ND = 1;
-var MA_2ND = 2;
-var MI_3RD = 3;
-var MA_3RD = 4;
-var P_4TH = 5;
-var TRI = 6;
-var P_5TH = 7;
-var MI_6TH = 8;
-var MA_6TH = 9;
-var MI_7TH = 10;
-var MA_7TH = 11;
+var intervals = {};
+var MI_2ND = intervals['b2'] = intervals['b9'] = 1;
+var MA_2ND = intervals['2'] = intervals['9'] = 2;
+var MI_3RD = intervals['#2'] = intervals['b3'] = intervals['#9'] = 3;
+var MA_3RD = intervals['3'] = 4;
+var P_4TH = intervals['4'] = intervals['11'] = 5;
+var TRI = intervals['#4'] = intervals['b5'] = intervals['#11'] = 6;
+var P_5TH = intervals['5'] = 7;
+var MI_6TH = intervals['#5'] = intervals['b13'] = 8;
+var MA_6TH = intervals['6'] = intervals['b7'] = intervals['13'] = 9;
+var MI_7TH = intervals['7'] = 10;
+var MA_7TH = intervals['#7'] = 11;
 
 var CHORD_PATTERN = new RegExp(
     '^\\s*' +
@@ -77,18 +78,39 @@ function chordSearch(query) {
     var opts;
     if (query[0].match(/^['"]/)) {
         query = query.replace(/['"]/g, '').trim();
-        opts = {
-            requiredNotes: query.split(/\s+/)
-        };
+        opts = parseNotes(query);
     } else {
         opts = parseChord(query);
         if (opts === null) {
-            opts = {
-                requiredNotes: query.split(/\s+/)
-            };
+            opts = parseNotes(query);
         }
     }
     return getChords(opts);
+}
+
+function parseNotes(query) {
+    var notes = query.trim().split(/\s+/);
+    var root = notes.shift();
+    root = root[0].toUpperCase() + root.substr(1);
+    if (NOTES.indexOf(root) === -1) {
+        return null;
+    }
+    var required = {};
+    required[root] = true;
+
+    for (var i = 0; i < notes.length; i++) {
+        var note = notes[i];
+        if (intervals[note]) {
+            var noteName = noteAdd(root, intervals[note]);
+            required[noteName] = true;
+        } else {
+            note = note[0].toUpperCase() + note.substr(1);
+            required[note] = true;
+        }
+    }
+    return {
+        requiredNotes: Object.keys(required)
+    };
 }
 
 function parseChord(query) {
