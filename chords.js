@@ -31,7 +31,7 @@ var CHORD_PATTERN = new RegExp(
     '\\s*' +
     '(sus|sus\\s?2|sus\\s?4)?' +
     '\\s*' +
-    '(#5|b5|#9|b9|#11|b11)?' +
+    '(#5|b5|#9|b9|#11)?' +
     '\\s*$');
 var CP_ROOT = 1;
 var CP_TRIAD = 2;
@@ -100,6 +100,7 @@ function parseChord(query) {
     var triad = match[CP_TRIAD];
     var ext = match[CP_EXT];
     var sus = match[CP_SUS];
+    var alt = match[CP_ALT];
     var required = {};
     var optional = {};
 
@@ -183,6 +184,20 @@ function parseChord(query) {
         } else {
             required[P_4TH] = true;
         }
+    }
+
+    if (alt === 'b5') {
+        delete optional[P_5TH];
+        required[TRI] = true;
+    } else if (alt === '#5') {
+        delete optional[P_5TH];
+        required[MI_6TH] = true;
+    } else if (alt === '#9') {
+        required[MI_3RD] = true;
+    } else if (alt === 'b9') {
+        required[MI_2ND] = true;
+    } else if (alt === '#11') {
+        required[TRI] = true;
     }
 
     var requiredNotes = [root];
