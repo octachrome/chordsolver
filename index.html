@@ -84,12 +84,13 @@
     };
 
     var synth = T('SynthDef').play();
+    synth.poly = 6;
 
     synth.def = function(opts) {
         var pluck = T('pluck', {freq: opts.freq, mul: 0.2 * opts.velocity / 128}).bang();
         var pluckEnv = T('perc', {a: 0, r: 200}, pluck).bang();
         var tri = T('tri', {freq: opts.freq * 2, mul: opts.velocity / 128});
-        var triEnv = T('perc', {a: 0, r: 1000}, tri);
+        var triEnv = T('perc', {a: 0, r: 1200}, tri);
 
         triEnv.on('ended', opts.doneAction).bang();
 
